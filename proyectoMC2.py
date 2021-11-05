@@ -2,8 +2,8 @@ from tkinter import *
 from tkinter.ttk import *
 from analizadorLexico import *
 from tkinter import simpledialog
-from pila import *
-#from analizadorSintactico import *
+from analizadorSintactico import analizadorSintactico
+from pila import pila
 import webbrowser,os
 
 scanner = AnalizadorLexico()
@@ -55,7 +55,7 @@ def operar():
     cadena1='('+numerador1.get('1.0', 'end').strip()+')/('+denominador1.get('1.0', 'end').strip()+')'
     cadena2='('+numerador2.get('1.0', 'end').strip()+')/('+denominador2.get('1.0', 'end').strip()+')'
     cadena3='('+numerador3.get('1.0', 'end').strip()+')/('+denominador3.get('1.0', 'end').strip()+')'
-    cadenaTotal='('+cadena1+')'+'('+operador1.get('1.0','end').strip()+')'+'('+cadena2+')'+'('+operador2.get('1.0','end').strip()+')'+'('+cadena3+')'
+    cadenaTotal='('+cadena1+')'+operador1.get('1.0','end').strip()+'('+cadena2+')'+operador2.get('1.0','end').strip()+'('+cadena3+')'
     cadenaTotal=cadenaTotal.strip()
     
     scanner.analizar(cadenaTotal)
@@ -70,39 +70,97 @@ def operar():
             diccionario[a.lexema]=simpledialog.askstring('Ingreso de valores','valor de '+a.lexema)
         else:
             pass
+
+    
     
     copiaLista.reverse()
-    lista_pila=pila()
-    lista_aux=pila()
-    lista_aux2=pila()
-
+    pila_prefija=pila()
+    stack=list()
     for a in copiaLista:
-        if a.tipo=='NUMERO':
-            lista_aux.apilar('['+a.lexema+']')
-        elif a.tipo=='VARIABLE':
-            lista_aux.apilar(a.lexema)
-        elif a.tipo=='POTENCIA' or a.tipo=='SUMA' or a.tipo=='RESTA' or a.tipo=='PRODUCTO' or a.tipo=='DIVISION':
-            lista_aux2.apilar(a.lexema)
+        if a.tipo=='VARIABLE':
+            pila_prefija.apilar('['+a.lexema+']')
+        
+        elif a.tipo=='NUMERO':
+            pila_prefija.apilar('['+a.lexema+']')
+        
+        elif a.tipo=='PARENTESIS2':
+            stack.append(a.lexema)
+        
         elif a.tipo=='PARENTESIS1':
+            try:
+                tmp=stack.pop()
+                while tmp!=')':
+                    pila_prefija.apilar(tmp)
+                    tmp=stack.pop()
+            except:
+                pass
+            
+        elif a.tipo=='SUMA' or a.tipo=='RESTA':
+            if len(stack)==0:
+                stack.append(a.lexema)
 
-            la1=lista_aux.fin
-            while la1!=None:
-                lista_pila.apilar(la1.elemento)
-                la1=la1.ant
-            lista_aux=pila()
+            else:
+                try:
+                    if stack[-1]=='+' or stack[-1]=='-' or stack[-1]==')':
+                        stack.append(a.lexema)
+                    else:
+                        tmp=stack.pop()
+                        while tmp!='+' or tmp!='-':
+                            pila_prefija.apilar(tmp)
+                            if stack[-1]!=')':
+                                tmp=stack.pop()
+                                continue
+                            break
+                            
+                        stack.append(a.lexema)
+                except:
+                    pass
 
-            la2=lista_aux2.fin
-            while la2!=None:
-                lista_pila.apilar(la2.elemento)
-                la2=la2.ant
-            lista_aux2=pila()
+        else:
+            stack.append(a.lexema)
+    
+    if len(stack)!=0:
+        try:
+            while len(stack)!=0:
+                pila_prefija.apilar(stack.pop())
+        except:
+            pass
 
-    asd=lista_pila.fin
-    cadena_ver=''
-    while asd!=None:
-        cadena_ver=asd.elemento+cadena_ver
-        asd=asd.ant
-    print(cadena_ver)
+    aux=pila_prefija.fin
+    cadenaPrueba=''
+    while aux!=None:
+        cadenaPrueba=aux.elemento+cadenaPrueba
+        aux=aux.ant
+    print(cadenaPrueba)
+
+
+    # for a in copiaLista:
+    #     if a.tipo=='NUMERO':
+    #         lista_aux.apilar('['+a.lexema+']')
+    #     elif a.tipo=='VARIABLE':
+    #         lista_aux.apilar(a.lexema)
+    #     elif a.tipo=='POTENCIA' or a.tipo=='SUMA' or a.tipo=='RESTA' or a.tipo=='PRODUCTO' or a.tipo=='DIVISION':
+    #         lista_aux2.apilar(a.lexema)
+    #     elif a.tipo=='PARENTESIS1':
+
+    #         la1=lista_aux.fin
+    #         while la1!=None:
+    #             lista_pila.apilar(la1.elemento)
+    #             la1=la1.ant
+    #         lista_aux=pila()
+
+    #         la2=lista_aux2.fin
+    #         while la2!=None:
+    #             lista_pila.apilar(la2.elemento)
+    #             la2=la2.ant
+    #         lista_aux2=pila()
+
+    # asd=lista_pila.fin
+    # cadena_ver=''
+    # while asd!=None:
+    #     cadena_ver=asd.elemento+cadena_ver
+    #     asd=asd.ant
+    #print(cadena_ver)
         
 
 
